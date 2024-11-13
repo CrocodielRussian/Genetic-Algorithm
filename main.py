@@ -4,7 +4,7 @@ from tkinter import ttk, messagebox
 import random
 
 class GeneticAlgorithm:
-    def __init__(self, population_size, num_genes, num_generations, mutation_rate, min_gene, max_gene, encoding):
+    def __init__(self, population_size, num_genes, num_generations, mutation_rate, min_gene, max_gene, encoding, modyfied):
         self.population_size = population_size
         self.num_genes = num_genes
         self.num_generations = num_generations
@@ -12,6 +12,7 @@ class GeneticAlgorithm:
         self.min_gene = min_gene
         self.max_gene = max_gene
         self.encoding = encoding
+        self.modyfied = modyfied
         self.population = self.create_population()
 
 
@@ -36,7 +37,7 @@ class GeneticAlgorithm:
             parents.append(tournament[0])
         return parents
 
-    def crossover(self, parents, mask):
+    def crossover_modyfied(self, parents, mask):
         child1 = []
         child2 = []
         for gene1, gene2, bit in zip(parents[0], parents[1], mask):
@@ -59,7 +60,13 @@ class GeneticAlgorithm:
                     child2.append(gene1)
 
         return child1, child2
-
+    def crossover_without_modyfied(self, parents, alpha = 0.5):
+        child1 = []
+        child2 = []
+        for gene1, gene2 in zip(parents[0], parents[1]):
+            child1.append(alpha * gene1 + (1 - alpha) * gene2)
+            child2.append(alpha * gene2 + (1 - alpha) * gene1)
+        return child1, child2
 
     def mutation(self, individual):
         for i in range(len(individual)):
@@ -80,7 +87,11 @@ class GeneticAlgorithm:
             for _ in range(self.population_size // 2):
                 parent1, parent2 = random.sample(parents, 2)
                 mask = self.generate_mask()
-                child1, child2 = self.crossover([parent1, parent2], mask)
+                if self.modyfied == "Включить":
+                    child1, child2 = self.crossover_modyfied([parent1, parent2], mask)
+                else:
+                    child1, child2 = self.crossover_without_modyfied([parent1, parent2])
+
                 child1 = self.mutation(child1)
                 child2 = self.mutation(child2)
                 new_population.append(child1)
@@ -101,6 +112,7 @@ class UI:
         self.population_size = tk.IntVar(value=100)
         self.mutation_rate = tk.DoubleVar(value=0.2)
         self.encoding = tk.StringVar(value='real')
+        self.modyfied = tk.StringVar(value='Включить')
         self.iterations_entry = tk.IntVar(value=10)
         self.count_of_chomosomes = tk.IntVar(value=2)
         self.min_value_of_searching = tk.IntVar(value=-10)
@@ -138,10 +150,14 @@ class UI:
         encoding_combobox = ttk.Combobox(parameter_frame, textvariable=self.encoding, values=['real', 'binary'])
         encoding_combobox.grid(row=5, column=1, sticky="w")
 
+        ttk.Label(parameter_frame, text="Модификация:").grid(row=6, column=0, sticky="w")
+        modyfied_combobox = ttk.Combobox(parameter_frame, textvariable=self.modyfied, values=['Включить', 'Выключить'])
+        modyfied_combobox.grid(row=6, column=1, sticky="w")
 
-        ttk.Label(parameter_frame, text="Количество итераций:").grid(row=6, column=0, sticky="w")
+
+        ttk.Label(parameter_frame, text="Количество итераций:").grid(row=7, column=0, sticky="w")
         mutation_rate_entry = ttk.Entry(parameter_frame, textvariable=self.iteration_count)
-        mutation_rate_entry.grid(row=6, column=1, sticky="w")
+        mutation_rate_entry.grid(row=7, column=1, sticky="w")
 
 
         # Фрейм для кнопок
@@ -203,21 +219,23 @@ class UI:
             max_value_of_searching = self.max_value_of_searching.get()
             num_generations = self.iteration_count.get()
             encoding = self.encoding.get()
+            modyfied = self.modyfied.get()
         except ValueError:
             messagebox.showerror("Ошибка", "В некоторые поля не были преданы аргументы")
             return
 
         self.iteration_count_done += self.iteration_count.get()
 
+        # start_data = [10, 20, 30, 40, 50]
         
-        ga = GeneticAlgorithm(population_size=population_size, num_genes=2, num_generations=num_generations , mutation_rate=mutation_rate, min_gene=min_value_of_searching, max_gene=max_value_of_searching, encoding=encoding)
+        ga = GeneticAlgorithm(population_size=population_size, num_genes=2, num_generations=num_generations , mutation_rate=mutation_rate, min_gene=min_value_of_searching, max_gene=max_value_of_searching, encoding=encoding, modyfied=modyfied)
         population, best_individual, best_fitness, individual_fitness = ga.run()
         self.set_table(population, individual_fitness)
         self.update_count_iterations(self.iteration_count_done)
         self.update_best_result_label(best_individual, best_fitness)
 
     def update_best_result_label(self, best_individual, best_fitness):
-        print(round(best_individual[0], 10), round(best_individual[1], 10))
+        print(f"{round(best_individual[0], 10)}, {round(best_individual[1], 10)}")
         print(round(best_fitness, 15))
         self.best_result_label.config(text=f"Координаты точки: {best_individual[0], best_individual[1]}")
         self.best_fitness_label.config(text=f"Значение функции: {round(best_fitness, 6)}")
