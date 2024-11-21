@@ -226,16 +226,14 @@ class UI:
 
         self.iteration_count_done += self.iteration_count.get()
 
-        # start_data = [10, 20, 30, 40, 50]
-        
-        ga = GeneticAlgorithm(population_size=population_size, num_genes=2, num_generations=num_generations , mutation_rate=mutation_rate, min_gene=min_value_of_searching, max_gene=max_value_of_searching, encoding=encoding, modyfied=modyfied)
+        ga = GeneticAlgorithm(population_size=100, num_genes=2, num_generations=num_generations, mutation_rate=mutation_rate, min_gene=min_value_of_searching, max_gene=max_value_of_searching, encoding=encoding, modyfied=modyfied)
         population, best_individual, best_fitness, individual_fitness = ga.run()
         self.set_table(population, individual_fitness)
         self.update_count_iterations(self.iteration_count_done)
         self.update_best_result_label(best_individual, best_fitness)
 
     def update_best_result_label(self, best_individual, best_fitness):
-        print(f"{round(best_individual[0], 10)}, {round(best_individual[1], 10)}")
+        print(f"({round(best_individual[0], 10)}, {round(best_individual[1], 10)})")
         print(round(best_fitness, 15))
         self.best_result_label.config(text=f"Координаты точки: {best_individual[0], best_individual[1]}")
         self.best_fitness_label.config(text=f"Значение функции: {round(best_fitness, 6)}")
